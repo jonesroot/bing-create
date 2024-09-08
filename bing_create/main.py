@@ -203,22 +203,59 @@ class AsyncImageGenerator:
             self.__log(f"✅ Saved image {filename}!")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate and save AI images.")
-    parser.add_argument("auth_cookie_u", type=str, help="Auth cookie _U from https://bing.com/")
-    parser.add_argument("auth_cookie_srchhpgusr", type=str, help="Auth cookie SRCHHPGUSR from https://bing.com/")
-    parser.add_argument("output_dir", type=str, help="Directory to save the images.")
-    parser.add_argument("num_images", type=int, help="Number of images to generate.")
-    parser.add_argument("prompt", type=str, help="Prompt for image generation.")
-    args = parser.parse_args()
-
-    generator = AsyncImageGenerator(
-        auth_cookie_u=args.auth_cookie_u,
-        auth_cookie_srchhpgusr=args.auth_cookie_srchhpgusr
+def main():
+    parser = argparse.ArgumentParser(
+        prog="Bing Create",
+        description="A simple lightweight AI Image Generator from text description using Bing Image Creator (DALL-E 3)",
+        epilog="Made by Waenara ^^"
     )
 
-    async def main():
-        images = await generator.generate(args.prompt, args.num_images)
-        await generator.save(images, args.output_dir)
+    parser.add_argument(
+        "--u",
+        help="Your _U cookie from https://bing.com/",
+        required=True
+    )
 
-    asyncio.run(main())
+    parser.add_argument(
+        "--s",
+        help="Your SRCHHPGUSR cookie from https://bing.com/",
+        required=True
+    )
+
+    parser.add_argument(
+        "--prompt",
+        help="Description of image to generate",
+        required=True
+    )
+
+    parser.add_argument(
+        "--number",
+        help="How many images to generate. Default: 4",
+        type=int,
+        default=4
+    )
+
+    parser.add_argument(
+        "--output",
+        help="Directory where to save generated images. If not specified you will just get links printed out",
+    )
+
+    parser.add_argument(
+        "--quiet",
+        help="If present logging is disabled",
+        action="store_true"
+    )
+
+    args = parser.parse_args()
+    generator = AsyncImageGenerator(args.u, args.s, not args.quiet)
+    generated_images = await generator.generate(args.prompt, args.number)
+
+    if args.output:
+        await generator.save(generated_images, args.output)
+    else:
+        for generated_image in generated_images:
+            print(f"🖼 {generated_image}")
+
+
+if __name__ == "__main__":
+    main()
