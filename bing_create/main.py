@@ -5,6 +5,9 @@ import time
 import aiofiles
 import httpx
 import logging
+import asyncio
+
+
 
 class ImageGenerator:
     """
@@ -191,8 +194,11 @@ class AsyncImageGenerator:
                 'src="https://tse([^"]+)"', response.text)]
             if not new_images:
                 raise Exception("🛑 No new images were generated for this cycle, please check your prompt")
-            images.extend(new_images)
+            images_to_add = new_images[:num_images - len(images)]
+            images.extend(images_to_add)
             self.__log(f"✅ Successfully finished cycle {cycle} in {round(time.time() - start_time, 2)} seconds")
+            if len(images) >= num_images:
+                break
 
         self.__log(f"✅ Finished generating {num_images} images in {round(time.time() - start, 2)} seconds and {cycle} cycles")
         return images[:num_images]
@@ -232,5 +238,8 @@ if __name__ == "__main__":
         auth_cookie_srchhpgusr=args.auth_cookie_srchhpgusr
     )
 
-    import asyncio
-    asyncio.run(generator.save(await generator.generate(args.prompt, args.num_images), args.output_dir))
+    async def main():
+        images = await generator.generate(args.prompt, args.num_images)
+        await generator.save(images, args.output_dir)
+
+    asyncio.run(main())
